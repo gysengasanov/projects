@@ -1,0 +1,55 @@
+import telebot
+from telebot import types
+TOKEN = ''
+bot = telebot.TeleBot(TOKEN)
+
+
+#Подписка на каналы
+def start_markup():
+	markup = types.InlineKeyboardMarkup(row_width=True)
+	link_keyboard = types.InlineKeyboardButton(text="📢1=й Канал", url="https://t.me/+gBo1zH68fj0xZjk1")
+	link_keyboard2 = types.InlineKeyboardButton(text="📢2=й Канал", url="https://t.me/dsfgfdfgdf")
+	check_kyboard = types.InlineKeyboardButton(text="Проверить 🔄", callback_data="check")
+	markup.add(link_keyboard, link_keyboard2,check_kyboard)
+	return markup
+
+@bot.message_handler(commands=['start'])
+def start(message):
+	chat_id = message.chat.id
+	first_name = message.chat.first_name
+	#p = open("C:\\Users\\alexandr\\Desktop\\291496.jpg", 'rb')
+	#bot.send_photo(chat_id, p)
+	bot.send_message(chat_id, f'Привет,{first_name},\n ✅Для получения доступа подпишитесь на каналы !✅',reply_markup=start_markup())
+
+def check(call):
+	status = ['creator','administrator','member']
+	for i in status:
+		if i == bot.get_chat_member(chat_id ="-1001420859572", user_id=call.message.chat.id).status:
+			check2(call)
+			break
+	else:
+		bot.send_message(call.message.chat.id,'❗Для получения доступа подпишитесь на каналы❗',reply_markup=start_markup())
+
+@bot.callback_query_handler(func = lambda call: True)
+def callback(call):
+	if call.data == 'check':
+		bot.delete_message(chat_id=call.message.chat.id,message_id=call.message.id)
+		check(call)
+
+def check2(call):
+	status = ['creator','administrator','member']
+	for i in status:
+		if i == bot.get_chat_member(chat_id = '-1001898538440', user_id=call.message.chat.id).status:
+			bot.send_message(call.message.chat.id, 'Спасибо что подписались!\n 🍿Для поиска фильмов введите /film 🍿')
+			break
+	else:
+		bot.send_message(call.message.chat.id,'Для получения доступа подпишитесь на каналы!',reply_markup=start_markup())
+
+@bot.message_handler(commands=['film'])
+def film(message):
+	
+	bot.send_message(message.chat.id, '🍿Чтобы найти фильм, перейдите сюда - https://t.me/+y6t2ZC2FOy5lZmE9 🍿\n 🍿Далее в поиске введите код фильма, к примеру 000 🍿')
+
+
+
+bot.polling(none_stop=False, interval=0)
