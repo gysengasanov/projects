@@ -1,0 +1,222 @@
+import telebot
+import aiogram
+import logging
+from telebot import types
+import random
+from random import randint
+from random import choice
+import numpy as np
+from aiogram import Bot, Dispatcher, executor, types
+import sqlite3
+from aiogram.dispatcher import Dispatcher
+from aiogram.utils import executor
+from pyrogram import Client , filters
+from pyrogram.errors import FloodWait
+import time
+from time import sleep
+TOKEN = ''
+bot = Bot(token=TOKEN)
+class Database:
+	def __init__(self,db_file):
+		self.connection = sqlite3.connect(db_file)
+		self.cursor = self.connection.cursor()
+
+	def add_user(self, user_id):
+		with self.connection:
+			return self.cursor.execute("INSERT INTO 'users' ('user_id') VALUES (?)", (user_id,))
+
+	def user_exists(self, user_id):
+		with self.connection:
+			result = self.cursor.execute('SELECT * FROM "users" WHERE "user_id" = ?', (user_id,)).fetchall()
+			return bool(len(result))
+
+	def set_nickname(self, user_id, nickname):
+		with self.connection:
+			return self.cursor.execute('UPDATE "users" SET "nickname" = ? WHERE "user_id" = ?', (nickname, user_id,))
+
+	def get_signup(self,user_id):
+		with self.connection:
+			result = self.cursor.execute('SELECT "signup" FROM "users" WHERE "user_id" = ?',(user_id,)).fetchall()
+			for row in result:
+				signup = str(row[0])
+			return signup
+
+	def set_signup(self, user_id, signup):
+		with self.connection:
+			return self.cursor.execute('UPDATE "users" SET "signup" = ? WHERE "user_id" = ?', (signup, user_id,))
+
+	def get_nickname(self,user_id):
+		with self.connection:
+			result = self.cursor.execute('SELECT "nickname" FROM "users" WHERE "user_id" = ?',(user_id,)).fetchall()
+			for row in result:
+				nickname = str(row[0])
+			return nickname
+
+db = Database('reg.db')
+
+
+
+
+def buy():
+	markup = types.InlineKeyboardMarkup(row_width=True)
+	link_keyboard2 = types.InlineKeyboardButton(text="💦Купить слив 189Р💦", url=" ")
+	markup.add(link_keyboard2)
+
+	return markup
+
+def pod():
+	markup = types.InlineKeyboardMarkup(row_width=True)
+	link_keyboard2 = types.InlineKeyboardButton(text="💟VipKa 99Р", url="")
+	markup.add(link_keyboard2)
+
+	return markup
+
+def ryadom():
+	markup = types.ReplyKeyboardMarkup(resize_keyboard = True)
+	item1 = types.KeyboardButton('🚀Найти слив🚀')
+	back = types.KeyboardButton('🚄Назад')
+	markup.add(item1, back)
+	return markup
+
+def random():
+	markup = types.InlineKeyboardMarkup(row_width=True)
+	link_keyboard5 = types.InlineKeyboardButton(text="Увидеть девушек 🌏Поблизости 49р", url="")
+	markup.add(link_keyboard5)
+	return markup
+
+
+
+
+
+
+def start_markup():
+	markup = types.InlineKeyboardMarkup(row_width=True)
+	link_keyboard2 = types.InlineKeyboardButton(text="🤤Купить Подписку🤤", url="")
+	markup.add(link_keyboard2)
+
+	return markup
+
+logging.basicConfig(level=logging.INFO)
+dp = Dispatcher(bot)
+
+@dp.message_handler(commands=['start'])
+async def start(message: types.Message):
+	if(not db.user_exists(message.from_user.id)):
+		db.add_user(message.from_user.id)
+		await bot.send_message(message.from_user.id, '💬Укажите ваш ник')
+	else:
+		await bot.send_message(message.from_user.id, '❤Вы уже зарегестрированы')
+		chat_id = message.chat.id
+		first_name = message.chat.first_name
+		
+		p = open("G:\\photo_2022-04-09_07-01-51.jpg", 'rb')
+		a = open("G:\\vid24\\photo_2022-10-26_07-37-25.jpg", 'rb')
+		b = open("G:\\vid24\\photo_2022-10-26_07-40-09.jpg", 'rb')
+		c = open("G:\\vid24\\photo_2022-10-24_06-07-33.jpg", 'rb')
+		n = open("G:\\vid24\\photo_2022-10-07_03-24-53.jpg", 'rb')
+		m = open("G:\\vid24\\photo_2022-09-28_14-53-56.jpg", 'rb')
+		z = np.random.randint(1,7)
+		print(z)
+		if z == 1:
+			await bot.send_photo(chat_id=message.chat.id, photo=p)
+		elif z == 2:
+			await bot.send_photo(chat_id=message.chat.id, photo=a)
+		elif z == 3:
+			await bot.send_photo(chat_id=message.chat.id, photo=b)
+		elif z == 4:
+			await bot.send_photo(chat_id=message.chat.id, photo=c)
+		elif z == 5:
+			await bot.send_photo(chat_id=message.chat.id, photo=n)
+		elif z == 6:
+			await bot.send_photo(chat_id=message.chat.id, photo=m)
+
+
+		markup = types.ReplyKeyboardMarkup(resize_keyboard = True)
+
+		item1 = types.KeyboardButton('💦Купить слив')
+		item2 = types.KeyboardButton('💟VipKa')
+		item3 = types.KeyboardButton('🌏Слив рядом')
+		item4 = types.KeyboardButton('👤Мой Профиль')
+
+		markup.add(item1, item2,item3,item4)
+		await bot.send_message(chat_id, f'Привет,{first_name}😘\n\nЗдесь ты можешь найти слив любой блогерши/стримерши/известной личности!\n\nА также найти слив🔞 своей одноклассницы/однокурсницы/соседки/подруги '.format(message.from_user), reply_markup = markup)
+
+
+
+	
+@dp.message_handler()
+async def bot_message(message: types.Message):
+	
+	if message.chat.type == 'private':
+		if message.text == '👤Мой Профиль':
+			user_nickname = '👤Имя пользователя: ' + db.get_nickname(message.from_user.id)
+			await bot.send_message(message.from_user.id,f'{user_nickname}\n\nСтатус подписки: 🔒Не активирована\n\n🧾Мои товары - Не найдено\n\nПоддержка - @quteVasilisa')
+			
+
+		else:
+			if db.get_signup(message.from_user.id) == 'setnickname':
+				if(len(message.text)> 15):
+					await bot.send_message(message.from_user.id, 'Никнейм не должен превышать 15 символов❗')
+				elif '@' in message.text or '/' in message.text:
+					await bot.send_message(message.from_user.id, 'Запрещенные символы @ /❗')
+
+			
+				else:
+					db.set_nickname(message.from_user.id, message.text)
+					db.set_signup(message.from_user.id, 'done')
+					await bot.send_message(message.from_user.id, 'successfully reg')
+					chat_id = message.chat.id
+					first_name = message.chat.first_name
+		
+					p = open("G:\\photo_2022-04-09_07-01-51.jpg", 'rb')
+					a = open("G:\\vid24\\photo_2022-10-26_07-37-25.jpg", 'rb')
+					b = open("G:\\vid24\\photo_2022-10-26_07-40-09.jpg", 'rb')
+					c = open("G:\\vid24\\photo_2022-10-24_06-07-33.jpg", 'rb')
+					z = np.random.randint(1,5)
+					print(z)
+					if z == 1:
+						await bot.send_photo(chat_id=message.chat.id, photo=p)
+					elif z == 2:
+						await bot.send_photo(chat_id=message.chat.id, photo=a)
+					elif z == 3:
+						await bot.send_photo(chat_id=message.chat.id, photo=b)
+					elif z == 4:
+						await bot.send_photo(chat_id=message.chat.id, photo=c)
+
+
+					markup = types.ReplyKeyboardMarkup(resize_keyboard = True)
+
+					item1 = types.KeyboardButton('💦Купить слив')
+					item2 = types.KeyboardButton('💟VipKa')
+					item3 = types.KeyboardButton('🌏Слив рядом')
+					item4 = types.KeyboardButton('👤Мой Профиль')
+
+					markup.add(item1, item2,item3,item4)
+					await bot.send_message(chat_id, f'Привет,{first_name}😘\n\nЗдесь ты можешь найти слив любой блогерши/стримерши/известной личности!\n\nА также найти слив🔞 своей одноклассницы/однокурсницы/соседки/подруги '.format(message.from_user), reply_markup = markup)
+
+		if message.text == '💦Купить слив':
+			await bot.send_message(message.chat.id, f'Купив слив💦, вы получаете архив с фото и видео.\n\nВ архиве находится более 1521 видео и 3651 фото с известными личностями\n\nДумаете:"Блин, как же я загружу это на свой компьютер или телефон"?\n\nНаш ответ - "При покупке вы получаете также доступ:\nк боту,из которого вы сможете на ваше усмотрение качать нужные видео и фото!',reply_markup = buy())
+				
+		elif message.text == '💟VipKa':
+			await bot.send_message(message.chat.id, f'💔Ваша подписка не активирована.\n\n"💟VipKa" подразумевает доступ к телеграм-каналу\n\nСпросите - "Так чем же отличается подписка от покупки архива?"\n\nА мы ответим - "Подписка" - это ежедневное получение фото и видео материалов\nвы ежедневно будете обновлять свой вечерний арсенал!🔞', reply_markup = pod())
+		elif message.text == '🌏Слив рядом':
+			await bot.send_message(message.chat.id, f'Эта функция позволяет проверить наличие сливов в нашей базе данных\n\nВ нашей базе более 7.5млрд Фото и видео девушек\n\nВелика вероятность,что мы найдём и вашу!', reply_markup = ryadom())
+		elif message.text == '🚀Найти слив🚀':
+			a = np.random.randint(3,7)
+			await bot.send_message(message.chat.id, f'🌏Поблизости к вам нашлись сливы {a} девушек🤳\n\nЖелаете посмотреть?👀',reply_markup =random())
+		elif message.text == '🚄Назад':
+			chat_id = message.chat.id
+			markup = types.ReplyKeyboardMarkup(resize_keyboard = True)
+			item1 = types.KeyboardButton('💦Купить слив')
+			item2 = types.KeyboardButton('💟VipKa')
+			item3 = types.KeyboardButton('🌏Слив рядом')
+			item4 = types.KeyboardButton('👤Мой Профиль')
+			markup.add(item1, item2,item3,item4)
+			await bot.send_message(chat_id, f'Назад🚄', reply_markup = markup)
+
+			
+
+
+if __name__ == '__main__':
+
+	executor.start_polling(dp , skip_updates = True)
