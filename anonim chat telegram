@@ -1,0 +1,70 @@
+import aiogram
+from aiogram import *
+from database import Database
+
+db = Database('dbpriv.db')
+
+TOKEN = ''
+bot = Bot(token=TOKEN)
+dp = Dispatcher(bot)
+
+def main():
+	print('hello')
+
+@dp.message_handler(commands=['stop'])
+async def stop(message):
+	chat_info = db.get_active_chat(message.chat.id)
+	if chat_info != False:
+		db.delete_chat(chat_info[0])
+		markup = types.ReplyKeyboardMarkup(resize_keyboard = True)
+		item1 = types.KeyboardButton('/stop')
+		markup.add(item1)
+		await bot.send_message(chat_info[1],'Собеседник покинул чат', reply_markup=markup)
+		await bot.send_message(message.chat.id,'Вы вышли из чата', reply_markup=markup)
+	else:
+		await bot.send_message(message.chat.id,'Вы не начали чат', reply_markup=markup)
+
+@dp.message_handler(commands=['start'])
+async def start(message: types.Message):
+    markup = types.ReplyKeyboardMarkup(resize_keyboard = True)
+
+    item1 = types.KeyboardButton('Поиск собеседника')
+    markup.add(item1)
+    await bot.send_message(message.from_user.id, 'Здесь вы можете найти анонимного собеседника', reply_markup=markup)
+
+@dp.message_handler(content_types = ['text'])
+async def bot_message(message):
+	if message.chat.type == 'private':
+		if message.text == 'Поиск собеседника':
+			markup = types.ReplyKeyboardMarkup(resize_keyboard = True)
+			item2 = types.KeyboardButton('Остановить поиск')
+			markup.add(item2)
+
+			chat_two = db.get_chat() # id 1 собеседника
+
+			if db.create_chat(message.chat.id, chat_two) == False:
+				db.add_queue(message.chat.id)
+				await bot.send_message(message.chat.id,'Проводим Поиск собеседника...',reply_markup=markup)
+
+			else:
+				markup = types.ReplyKeyboardMarkup(resize_keyboard = True)
+				item3 = types.KeyboardButton('/stop')
+				markup.add(item3)
+				await bot.send_message(message.chat.id,'Собеседник найден!\nЧтобы остановить диалог напишите /stop')
+				await bot.send_message(chat_two,'Собеседник найден!\nЧтобы остановить диалог напишите /stop')
+
+
+
+
+		elif message.text == 'Остановить поиск':
+			db.delete_queue(message.chat.id)
+			await bot.send_message(message.chat.id,'Поиск остановлен,напишите /start')
+
+		else:
+			chat_info = db.get_active_chat(message.chat.id)
+			await bot.send_message(chat_info[1], message.text)
+
+
+
+if __name__ == '__main__':
+    executor.start_polling(dp , skip_updates = True)
